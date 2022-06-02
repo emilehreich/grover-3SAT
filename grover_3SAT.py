@@ -20,10 +20,12 @@ from qiskit.visualization import *
 from qiskit.compiler import transpile, assemble
 from qiskit.circuit.library import MCMT
 import numpy as np
+import time
 
 # =============================================================================================
 # Account loading
 provider = IBMQ.load_account()
+provider = IBMQ.get_provider(group='open')
 
 # =============================================================================================
 # Problem instance
@@ -59,14 +61,35 @@ def oracle_uf(circuit):
 
     # Warning: the bits have been inversed to comply with the binary
     # conventions on the results
+    circuit.ccx(2, 0, 3)
+    circuit.ccx(1, 0, 3)
 
-    #circuit.ccx(2, 0, 3)
-    #circuit.ccx(1, 0, 3)
-    circuit.cz(1, 0)
-    circuit.cz(2, 0)
 
-# Question 3
 def reflection(circuit):
+    '''
+        The reflection operator
+    '''
+    # ---------------
+    for i in range (0, 3):
+        circuit.h(i)
+        circuit.x(i)
+    # ---------------
+    circuit.h(2)
+    # ---------------
+    circuit.barrier(np.arange(0,3))
+    # ---------------
+    circuit.ccx(0, 1, 2)
+    # ---------------
+    circuit.barrier(np.arange(0,3))
+    # ---------------
+    circuit.h(2)
+    # ---------------
+    for i in range (0, 3):
+        circuit.x(i)
+
+
+# Question 5
+def direct_reflection(circuit):
     '''
         The reflection operator
     '''
@@ -89,13 +112,9 @@ def reflection(circuit):
 
 
 # Question 5
-def direct_Uf():
-    pass
-    # Add an ancilla qubit
-    # Apply Hadamard to initial state with ancilla = 0
-    # Apply Uf (as in ex2)
-    # Project with |xyz><abc| transformation where abc is Hadamard basis
-
+def direct_uf(circuit):
+    circuit.cz(1, 0)
+    circuit.cz(2, 0)
 
 # =============================================================================================
 # helper functions
@@ -117,6 +136,25 @@ def simulate(circuit):
 
     plot_histogram(counts)
 
+def run(circuit):
+    machine = provider.get_backend('ibmq_armonq')
+    transpiled = transpile(circuit, backend=machine)
+    job = machine.run(transpiled)
+    retrieved_job = machine.retrieve_job(job.job_id())
+
+    status = machine.status()
+    print("Operational: " + str(status.operational))
+    print("Pending jobs: " + str(status.pending_jobs))
+
+
+    result = retrieved_job.result()
+    counts = result.get_counts(circuit)
+
+    print(counts)
+
+    plot_histogram(counts)
+
+
 
 # =============================================================================================
 # Main
@@ -129,37 +167,58 @@ naive_enumeration()
 # ----------------------------------------
 # circuit implementation
 
+direct_mode = True
+simulation_only = True
+
 qubits  = 3
-nb_bits = 3
+
+if direct_mode:
+    nb_bits = 3
+else:
+    nb_bits = 4
 
 
 # initialize circuit
 circuit = QuantumCircuit(nb_bits, qubits)
 
+# set ancilla qubits to 1
+for i in range (qubits, nb_bits):
+    circuit.x(i)
+
 # initial state
 gen_hadamard(circuit, np.arange(0, nb_bits))
 # ---------------
-circuit.barrier(np.arange(0,3))
+circuit.barrier(np.arange(0, nb_bits))
 # ---------------
 
 # add oracle U_f
-oracle_uf(circuit)
+
+if direct_mode:
+    direct_uf(circuit)
+else:
+    oracle_uf(circuit)
 
 # ---------------
-circuit.barrier(np.arange(0,3))
+circuit.barrier(np.arange(0, nb_bits))
 # ---------------
 
 # add reflector operator
-reflection(circuit)
+if direct_mode:
+    direct_reflection(circuit)
+else:
+    reflection(circuit)
 
 # ---------------
-circuit.barrier(np.arange(0,3))
+circuit.barrier(np.arange(0, nb_bits))
 # ---------------
 
-for i in range (0, 3):
+for i in range (0, qubits):
     circuit.h(i)
 
 # measure
-circuit.measure(np.arange(0, nb_bits), np.arange(0, nb_bits))
+circuit.measure(np.arange(0, qubits), np.arange(0, qubits))
 
 simulate(circuit)
+
+if not simulation_only:
+    run(circuit)
