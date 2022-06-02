@@ -17,7 +17,6 @@
 
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit, execute, Aer, IBMQ
 from qiskit.visualization import *
-from qiskit.tools.jupyter import *
 from qiskit.compiler import transpile, assemble
 import numpy as np
 
@@ -49,7 +48,7 @@ def naive_enumeration():
 
 
 # Question 2
-def oracle_uf():
+def oracle_uf(circuit):
     # N = 8
     # M = 2
     # Define \theta as \arcsin(\sqrt \frac{M}{N})
@@ -57,12 +56,8 @@ def oracle_uf():
 
     # ex1() yields the solutions s_1 = (1, 0, 1) and s_2 (0, 1, 1)
 
-    Uf = np.array([[1, 0, 0, 1 ],
-                   [0, 1, 0, 1 ],
-                   [0, 0, 1, 0 ],
-                   [1, 1, 0, 1 ]]) # The last vector was found as s_1 xor s_2
-
-    return Uf
+    circuit.ccx(0, 2, 3)
+    circuit.ccx(1, 2, 3)
 
 # Question 3
 def reflection():
@@ -102,7 +97,7 @@ def simulate(circuit, shots):
 # Main
 
 if __name__ == "__Main__":
-    
+
     # ----------------------------------------
     # Q1: naive enumeration
     naive_enumeration()
@@ -111,7 +106,7 @@ if __name__ == "__Main__":
     # circuit implementation
 
     qubits  = 3
-    nb_bits = 4 
+    nb_bits = 4
 
     # initialize circuit
     circuit = QuantumCircuit(nb_bits, qubits)
@@ -122,9 +117,6 @@ if __name__ == "__Main__":
     circuit.barrier(np.arange(0,4))
 
     # add oracle U_f
-    u_f = oracle_uf()
-    circuit.append(u_f, range(0,3))
+    oracle_uf(circuit)
 
     # add reflector operator
-
-    
