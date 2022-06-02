@@ -19,7 +19,6 @@ from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit, execute, 
 from qiskit.visualization import *
 from qiskit.tools.jupyter import *
 from qiskit.compiler import transpile, assemble
-from ibm_quantum_widgets import *
 import numpy as np
 
 # =============================================================================================
@@ -81,12 +80,21 @@ def direct_Uf():
     # Project with |xyz><abc| transformation where abc is Hadamard basis
 
 
+# =============================================================================================
+# helper functions
+
+def gen_hadamard(circuit, qubits):
+    """Apply a H-gate to 'qubits' in qc"""
+    for q in qubits:
+        circuit.h(q)
+    return circuit
+
 # Generic functions
 def simulate(circuit, shots):
     simulator = Aer.get_backend('qasm_simulator')
     job = execute(circuit, simulator, shots)
     result = job.result()
-    counts = results.get_counts(circuit)
+    counts = result.get_counts(circuit)
 
     print(counts) # TODO
 
@@ -94,4 +102,29 @@ def simulate(circuit, shots):
 # Main
 
 if __name__ == "__Main__":
+    
+    # ----------------------------------------
+    # Q1: naive enumeration
     naive_enumeration()
+
+    # ----------------------------------------
+    # circuit implementation
+
+    qubits  = 3
+    nb_bits = 4 
+
+    # initialize circuit
+    circuit = QuantumCircuit(nb_bits, qubits)
+
+    # initial state
+    gen_hadamard(circuit, nb_bits)
+
+    circuit.barrier(np.arange(0,4))
+
+    # add oracle U_f
+    u_f = oracle_uf()
+    circuit.append(u_f, range(0,3))
+
+    # add reflector operator
+
+    
