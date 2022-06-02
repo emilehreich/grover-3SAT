@@ -18,6 +18,7 @@
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit, execute, Aer, IBMQ
 from qiskit.visualization import *
 from qiskit.compiler import transpile, assemble
+from qiskit.circuit.library import MCMT
 import numpy as np
 
 # =============================================================================================
@@ -59,8 +60,10 @@ def oracle_uf(circuit):
     # Warning: the bits have been inversed to comply with the binary
     # conventions on the results
 
-    circuit.ccx(2, 0, 3)
-    circuit.ccx(1, 0, 3)
+    #circuit.ccx(2, 0, 3)
+    #circuit.ccx(1, 0, 3)
+    circuit.cz(1, 0)
+    circuit.cz(2, 0)
 
 # Question 3
 def reflection(circuit):
@@ -72,17 +75,12 @@ def reflection(circuit):
         circuit.h(i)
         circuit.x(i)
     # ---------------
-    circuit.barrier(np.arange(0,3))
-    # ---------------
-    circuit.h(2)
     # ---------------
     circuit.barrier(np.arange(0,3))
     # ---------------
-    circuit.ccx(0,1,2)
+    gate = MCMT('cz', 2, 1)
+    circuit += gate
     # ---------------
-    circuit.barrier(np.arange(0,3))
-    # ---------------
-    circuit.h(2)
     # ---------------
     circuit.barrier(np.arange(0,3))
     # ---------------
@@ -132,15 +130,14 @@ naive_enumeration()
 # circuit implementation
 
 qubits  = 3
-nb_bits = 4
+nb_bits = 3
 
 
 # initialize circuit
 circuit = QuantumCircuit(nb_bits, qubits)
-circuit.initialize([0, 1], 3)
+
 # initial state
 gen_hadamard(circuit, np.arange(0, nb_bits))
-circuit.x(3)
 # ---------------
 circuit.barrier(np.arange(0,3))
 # ---------------
@@ -149,21 +146,20 @@ circuit.barrier(np.arange(0,3))
 oracle_uf(circuit)
 
 # ---------------
-circuit.barrier(np.arange(0,4))
+circuit.barrier(np.arange(0,3))
 # ---------------
 
 # add reflector operator
 reflection(circuit)
 
 # ---------------
-circuit.barrier(np.arange(0,4))
+circuit.barrier(np.arange(0,3))
 # ---------------
 
-for i in range (0, 4):
+for i in range (0, 3):
     circuit.h(i)
 
-print(np.arange(nb_bits-2, 0, -1))
 # measure
-circuit.measure(np.arange(0, nb_bits-1), np.arange(0, nb_bits-1))
+circuit.measure(np.arange(0, nb_bits), np.arange(0, nb_bits))
 
 simulate(circuit)
