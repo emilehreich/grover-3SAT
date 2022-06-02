@@ -65,11 +65,33 @@ def oracle_uf():
     return Uf
 
 # Question 3
-def reflection():
+def reflection(circuit):
     '''
         The reflection operator
     '''
-    pass
+    # ---------------
+    for i in range (0, 3):
+        circuit.h(i)
+        circuit.x(i)
+    # ---------------
+    circuit.barrier(np.arange(0,3))
+    # ---------------
+    circuit.h(2)
+    # ---------------
+    circuit.barrier(np.arange(0,3))
+    # ---------------
+    circuit.ccx(0,1,2)
+    # ---------------
+    circuit.barrier(np.arange(0,3))
+    # ---------------
+    circuit.h(2)
+    # ---------------
+    circuit.barrier(np.arange(0,3))
+    # ---------------
+    for i in range (0, 3):
+        circuit.x(i)
+        circuit.h(i)
+    
 
 # Question 5
 def direct_Uf():
@@ -112,19 +134,30 @@ if __name__ == "__Main__":
 
     qubits  = 3
     nb_bits = 4 
-
-    # initialize circuit
     circuit = QuantumCircuit(nb_bits, qubits)
 
     # initial state
     gen_hadamard(circuit, nb_bits)
-
-    circuit.barrier(np.arange(0,4))
+    circuit.x(3)
+    # ---------------
+    circuit.barrier(np.arange(0,3))
+    # ---------------
 
     # add oracle U_f
     u_f = oracle_uf()
     circuit.append(u_f, range(0,3))
 
+    # ---------------
+    circuit.barrier(np.arange(0,4))
+    # ---------------
+    
     # add reflector operator
+    reflection(circuit)
 
+    # ---------------
+    circuit.barrier(np.arange(0,4))
+    # ---------------
+
+    # measure
+    circuit.measure(np.arange(0 , nb_bits - 1), np.arange(0 , nb_bits - 1))
     
