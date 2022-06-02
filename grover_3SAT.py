@@ -56,8 +56,11 @@ def oracle_uf(circuit):
 
     # ex1() yields the solutions s_1 = (1, 0, 1) and s_2 (0, 1, 1)
 
-    circuit.ccx(0, 2, 3)
-    circuit.ccx(1, 2, 3)
+    # Warning: the bits have been inversed to comply with the binary
+    # conventions on the results
+
+    circuit.ccx(2, 0, 3)
+    circuit.ccx(1, 0, 3)
 
 # Question 3
 def reflection(circuit):
@@ -85,8 +88,7 @@ def reflection(circuit):
     # ---------------
     for i in range (0, 3):
         circuit.x(i)
-        circuit.h(i)
-    
+
 
 # Question 5
 def direct_Uf():
@@ -107,54 +109,61 @@ def gen_hadamard(circuit, qubits):
     return circuit
 
 # Generic functions
-def simulate(circuit, shots):
+def simulate(circuit):
     simulator = Aer.get_backend('qasm_simulator')
-    job = execute(circuit, simulator, shots)
+    job = execute(circuit, simulator)
     result = job.result()
     counts = result.get_counts(circuit)
 
-    print(counts) # TODO
+    print(counts)
+
+    plot_histogram(counts)
+
 
 # =============================================================================================
 # Main
 
-if __name__ == "__Main__":
 
-    # ----------------------------------------
-    # Q1: naive enumeration
-    naive_enumeration()
+# ----------------------------------------
+# Q1: naive enumeration
+naive_enumeration()
 
-    # ----------------------------------------
-    # circuit implementation
+# ----------------------------------------
+# circuit implementation
 
-    qubits  = 3
-    nb_bits = 4 
-    
+qubits  = 3
+nb_bits = 4
 
-    # initialize circuit
-    circuit = QuantumCircuit(nb_bits, qubits)
 
-    # initial state
-    gen_hadamard(circuit, nb_bits)
-    circuit.x(3)
-    # ---------------
-    circuit.barrier(np.arange(0,3))
-    # ---------------
+# initialize circuit
+circuit = QuantumCircuit(nb_bits, qubits)
+circuit.initialize([0, 1], 3)
+# initial state
+gen_hadamard(circuit, np.arange(0, nb_bits))
+circuit.x(3)
+# ---------------
+circuit.barrier(np.arange(0,3))
+# ---------------
 
-    # add oracle U_f
-    oracle_uf(circuit)
+# add oracle U_f
+oracle_uf(circuit)
 
-    # ---------------
-    circuit.barrier(np.arange(0,4))
-    # ---------------
-    
-    # add reflector operator
-    reflection(circuit)
+# ---------------
+circuit.barrier(np.arange(0,4))
+# ---------------
 
-    # ---------------
-    circuit.barrier(np.arange(0,4))
-    # ---------------
+# add reflector operator
+reflection(circuit)
 
-    # measure
-    circuit.measure(np.arange(0 , nb_bits - 1), np.arange(0 , nb_bits - 1))
-    
+# ---------------
+circuit.barrier(np.arange(0,4))
+# ---------------
+
+for i in range (0, 4):
+    circuit.h(i)
+
+print(np.arange(nb_bits-2, 0, -1))
+# measure
+circuit.measure(np.arange(0, nb_bits-1), np.arange(0, nb_bits-1))
+
+simulate(circuit)
